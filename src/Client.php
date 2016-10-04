@@ -15,7 +15,7 @@ class Client
     /**
      * Authenticator constructor.
      * @param ClientInterface $client
-     * @param Cache|CacheInterface $cache
+     * @param CacheInterface $cache
      * @param AuthenticatorInterface $authenticator
      */
     public function __construct(ClientInterface $client, CacheInterface $cache, AuthenticatorInterface $authenticator)
@@ -25,6 +25,11 @@ class Client
         $this->authenticator = $authenticator;
     }
 
+    /**
+     * @param integer $year
+     * @param integer $week
+     * @return mixed
+     */
     protected function getData($year, $week)
     {
         $loginCredentials = $this->authenticator->getApiCredentials();
@@ -48,10 +53,17 @@ class Client
             'version' => getenv('VERSION')
         ];
 
-        return $this->getWeekData($url, $week,$settings);
+        return $this->getWeekData($url, $week, $settings);
 
     }
-    protected function getWeekData($url,$week, $settings){
+
+    /**
+     * @param string $url
+     * @param integer $week
+     * @param object $settings
+     * @return mixed
+     */
+    protected function getWeekData($url, $week, $settings){
         $key = 'rooster' . $week;
 
         $cache = $this->cache->has($key, function ($cache) use ($key) {
@@ -61,8 +73,6 @@ class Client
         if ($cache) {
             return $cache;
         }
-
-        echo 'get rooster data';
 
         $data = $this->client->request(
             'GET',
@@ -82,7 +92,7 @@ class Client
     }
 
     /**
-     * Parse the html page returned using the parser.
+     * Get the start and end date for the specified week.
      *
      * @return array
      */

@@ -15,7 +15,7 @@ class Authenticator implements AuthenticatorInterface
     /**
      * Authenticator constructor.
      * @param ClientInterface $client
-     * @param Cache $cache
+     * @param CacheInterface $cache
      */
     public function __construct(ClientInterface $client, CacheInterface $cache)
     {
@@ -23,10 +23,17 @@ class Authenticator implements AuthenticatorInterface
         $this->cache = $cache;
     }
 
+    /**
+     * Send the authorisation header
+     * and store the api tokens from the response.
+     *
+     * @return object
+     */
     public function getApiCredentials()
     {
         // 534240 = ((24*60) * 7) * 53 = 1 year
         $lifetime = 534240;
+
         $hasToken = $this->cache->has('accessToken',null, $lifetime);
         $hasUserId = $this->cache->has('userId', null,$lifetime);
         $hasLoginSession = $this->cache->has('loginSession',null,$lifetime);
@@ -41,9 +48,9 @@ class Authenticator implements AuthenticatorInterface
 
         $apiCredentials = $this->sendAuthHeader();
 
-        $accessToken = $apiCredentials['access_token'];
-        $userId = $apiCredentials['user_id'];
-        $loginSession = $apiCredentials['login_session'];
+        $accessToken = $apiCredentials->access_token;
+        $userId = $apiCredentials->user_id;
+        $loginSession = $apiCredentials->login_session;
 
         $this->cache->store('accessToken',$accessToken);
         $this->cache->store('userId',$userId);
@@ -52,10 +59,13 @@ class Authenticator implements AuthenticatorInterface
         return (object) ['accessToken' => $accessToken,'userId' => $userId,'loginSession' => $loginSession];
     }
 
+    /**
+     * Send Basic Authorization to get API tokens.
+     *
+     * @return object
+     */
     protected function sendAuthHeader()
     {
-        echo 'send request';
-        $userAgent = '';
         $url = getenv('LOGIN_ENDPOINT');
         $username = getenv('LOGIN_USER');
         $password = getenv('LOGIN_PASSWORD');
@@ -66,7 +76,7 @@ class Authenticator implements AuthenticatorInterface
 
         $response = $this->client->request('GET', $url, [
             'headers' => [
-                'User-Agent' => $userAgent,
+                'User-Agent' => '',
                 'Authorization' => 'Basic ' .base64_encode($username . ':' . $password),
                 'Cookie' => 'laravel_session=' . $session,
                 'Cookie2' => '$Version=' . $version,
@@ -84,6 +94,6 @@ class Authenticator implements AuthenticatorInterface
         $loginSession = str_replace('laravel_session=','',$loginSession);
         $loginSession =substr($loginSession,0,strpos($loginSession,';'));
 
-        return ['access_token' => $data->access_token, 'user_id' => $data->user_id,'login_session' => $loginSession];
+        return (object) ['access_token' => $data->access_token, 'user_id' => $data->user_id,'login_session' => $loginSession];
     }
 }
