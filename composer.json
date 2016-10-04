@@ -1,0 +1,17 @@
+{
+  "name": "maartengdev/authenticator",
+  "minimum-stability": "stable",
+  "description": "Cache all data using different drivers",
+  "license": "MIT",
+  "php": "^5.4",
+  "require": {
+    "guzzlehttp/guzzle": "^6.2",
+    "maartengdev/cache-drivers": "^1.1",
+    "vlucas/phpdotenv": "^2.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "MaartenGDev\\": "src/"
+    }
+  }
+}
