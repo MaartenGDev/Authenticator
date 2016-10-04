@@ -39,9 +39,9 @@ class Authenticator implements AuthenticatorInterface
         $hasLoginSession = $this->cache->has('loginSession',null,$lifetime);
 
         if($hasToken && $hasUserId && $hasLoginSession){
-            $accessToken = $this->cache->get('accessToken');
-            $userId = $this->cache->get('userId');
-            $loginSession = $this->cache->get('loginSession');
+            $accessToken = $this->cache->get('accessToken',$lifetime);
+            $userId = $this->cache->get('userId',$lifetime);
+            $loginSession = $this->cache->get('loginSession',$lifetime);
 
             return (object) ['accessToken' => $accessToken,'userId' => $userId,'loginSession' => $loginSession];
         }

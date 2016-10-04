@@ -88,7 +88,7 @@ class Client
             ]
         )->getBody();
         $this->cache->store($key, $data);
-        return $this->cache->get('rooster' . $week);
+        return $this->cache->get($key);
     }
 
     /**
