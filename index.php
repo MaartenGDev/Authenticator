@@ -6,7 +6,7 @@ use MaartenGDev\Client;
 use MaartenGDev\LocalDriver;
 use GuzzleHttp\Client as GuzzleHttp;
 
-include_once 'vendor/autoload.php';
+require_once 'vendor/autoload.php';
 $dir = $_SERVER['DOCUMENT_ROOT'] .'/cache/';
 
 $dotenv = new Dotenv(__DIR__);

@@ -8,20 +8,24 @@ class Authenticator implements AuthenticatorInterface
 {
     protected $client;
     /**
-     * @var CacheInterface
+     * @var CacheInterface $cache The cache interface
      */
-    private $cache;
+    protected $cache;
+
 
     /**
      * Authenticator constructor.
-     * @param ClientInterface $client
-     * @param CacheInterface $cache
+     *
+     * @param ClientInterface $client The client interface
+     * @param CacheInterface  $cache  The cache interface
      */
     public function __construct(ClientInterface $client, CacheInterface $cache)
     {
         $this->client = $client;
-        $this->cache = $cache;
-    }
+        $this->cache  = $cache;
+
+    }//end __construct()
+
 
     /**
      * Send the authorisation header
@@ -34,30 +38,40 @@ class Authenticator implements AuthenticatorInterface
         // 534240 = ((24*60) * 7) * 53 = 1 year
         $lifetime = 534240;
 
-        $hasToken = $this->cache->has('accessToken',null, $lifetime);
-        $hasUserId = $this->cache->has('userId', null,$lifetime);
-        $hasLoginSession = $this->cache->has('loginSession',null,$lifetime);
+        $hasToken        = $this->cache->has('accessToken', null, $lifetime);
+        $hasUserId       = $this->cache->has('userId', null, $lifetime);
+        $hasLoginSession = $this->cache->has('loginSession', null, $lifetime);
 
-        if($hasToken && $hasUserId && $hasLoginSession){
-            $accessToken = $this->cache->get('accessToken',$lifetime);
-            $userId = $this->cache->get('userId',$lifetime);
-            $loginSession = $this->cache->get('loginSession',$lifetime);
+        if ($hasToken === true && $hasUserId === true && $hasLoginSession === true) {
+            $accessToken  = $this->cache->get('accessToken', $lifetime);
+            $userId       = $this->cache->get('userId', $lifetime);
+            $loginSession = $this->cache->get('loginSession', $lifetime);
 
-            return (object) ['accessToken' => $accessToken,'userId' => $userId,'loginSession' => $loginSession];
+            return (object) [
+                             'accessToken'  => $accessToken,
+                             'userId'       => $userId,
+                             'loginSession' => $loginSession,
+                            ];
         }
 
         $apiCredentials = $this->sendAuthHeader();
 
-        $accessToken = $apiCredentials->access_token;
-        $userId = $apiCredentials->user_id;
+        $accessToken  = $apiCredentials->access_token;
+        $userId       = $apiCredentials->user_id;
         $loginSession = $apiCredentials->login_session;
 
-        $this->cache->store('accessToken',$accessToken);
-        $this->cache->store('userId',$userId);
-        $this->cache->store('loginSession',$loginSession);
+        $this->cache->store('accessToken', $accessToken);
+        $this->cache->store('userId', $userId);
+        $this->cache->store('loginSession', $loginSession);
 
-        return (object) ['accessToken' => $accessToken,'userId' => $userId,'loginSession' => $loginSession];
-    }
+        return (object) [
+                         'accessToken'  => $accessToken,
+                         'userId'       => $userId,
+                         'loginSession' => $loginSession,
+                        ];
+
+    }//end getApiCredentials()
+
 
     /**
      * Send Basic Authorization to get API tokens.
@@ -66,34 +80,45 @@ class Authenticator implements AuthenticatorInterface
      */
     protected function sendAuthHeader()
     {
-        $url = getenv('LOGIN_ENDPOINT');
+        $url      = getenv('LOGIN_ENDPOINT');
         $username = getenv('LOGIN_USER');
         $password = getenv('LOGIN_PASSWORD');
-        $token = getenv('CLIENT_TOKEN');
-        $session = getenv('LOGIN_SESSION');
+        $token    = getenv('CLIENT_TOKEN');
+        $session  = getenv('LOGIN_SESSION');
         $language = getenv('LANGUAGE');
-        $version = getenv('VERSION');
+        $version  = getenv('VERSION');
 
-        $response = $this->client->request('GET', $url, [
-            'headers' => [
-                'User-Agent' => '',
-                'Authorization' => 'Basic ' .base64_encode($username . ':' . $password),
-                'Cookie' => 'laravel_session=' . $session,
-                'Cookie2' => '$Version=' . $version,
-                'language' => $language,
-                'clientToken' => $token,
+        $response = $this->client->request(
+            'GET',
+            $url,
+            [
+             'headers' => [
+                           'User-Agent'    => '',
+                           'Authorization' => 'Basic '.base64_encode($username.':'.$password),
+                           'Cookie'        => 'laravel_session='.$session,
+                           'Cookie2'       => '$Version='.$version,
+                           'language'      => $language,
+                           'clientToken'   => $token,
+                          ],
             ]
-        ]);
+        );
 
-        $data = json_decode($response->getBody());
+        $data         = json_decode($response->getBody());
         $loginSession = $response->getHeader('Set-Cookie');
 
         $loginSession = $loginSession[0];
 
 
-        $loginSession = str_replace('laravel_session=','',$loginSession);
-        $loginSession =substr($loginSession,0,strpos($loginSession,';'));
+        $loginSession = str_replace('laravel_session=', '', $loginSession);
+        $loginSession = substr($loginSession, 0, strpos($loginSession, ';'));
 
-        return (object) ['access_token' => $data->access_token, 'user_id' => $data->user_id,'login_session' => $loginSession];
-    }
-}
+        return (object) [
+                         'access_token'  => $data->access_token,
+                         'user_id'       => $data->user_id,
+                         'login_session' => $loginSession,
+                        ];
+
+    }//end sendAuthHeader()
+
+
+}//end class
