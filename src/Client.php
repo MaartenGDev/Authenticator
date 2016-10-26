@@ -7,27 +7,44 @@ use GuzzleHttp\ClientInterface;
 
 class Client
 {
+    /**
+     * @var ClientInterface $client The client interface
+     */
     protected $client;
-    /* @param Cache $cache */
+
+    /**
+     * @param CacheInterface $cache The cache interface
+     */
     protected $cache;
+
+    /**
+     * @param AuthenticatorInterface $auth The authenticator interface
+     */
     protected $auth;
+
 
     /**
      * Authenticator constructor.
-     * @param ClientInterface $client
-     * @param CacheInterface $cache
-     * @param AuthenticatorInterface $authenticator
+     *
+     * @param ClientInterface        $client        The client interface
+     * @param CacheInterface         $cache         The cache interface
+     * @param AuthenticatorInterface $authenticator The authenticator interface
      */
     public function __construct(ClientInterface $client, CacheInterface $cache, AuthenticatorInterface $authenticator)
     {
-        $this->client = $client;
-        $this->cache = $cache;
+        $this->client        = $client;
+        $this->cache         = $cache;
         $this->authenticator = $authenticator;
-    }
+
+    }//end __construct()
+
 
     /**
-     * @param integer $year
-     * @param integer $week
+     * Get the data for the week
+     *
+     * @param integer $year The year the week is in
+     * @param integer $week The week to select data from
+     *
      * @return mixed
      */
     protected function getData($year, $week)
@@ -38,39 +55,47 @@ class Client
 
         $params = http_build_query(
             [
-                'start_date' => $dateRange['start'],
-                'end_date' => $dateRange['end'],
+             'start_date' => $dateRange['start'],
+             'end_date'   => $dateRange['end'],
             ]
         );
 
-        $url = getenv('API_ENDPOINT') . '?' . $params;
+        $url = getenv('API_ENDPOINT').'?'.$params;
 
         $settings = (object) [
-            'loginSession' => $loginCredentials->loginSession,
-            'accessToken' => $loginCredentials->accessToken,
-            'language' => getenv('LANGUAGE'),
-            'clientToken' => getenv('CLIENT_TOKEN'),
-            'version' => getenv('VERSION')
-        ];
+                              'loginSession' => $loginCredentials->loginSession,
+                              'accessToken'  => $loginCredentials->accessToken,
+                              'language'     => getenv('LANGUAGE'),
+                              'clientToken'  => getenv('CLIENT_TOKEN'),
+                              'version'      => getenv('VERSION'),
+                             ];
 
         return $this->getWeekData($url, $week, $settings);
 
-    }
+    }//end getData()
+
 
     /**
-     * @param string $url
-     * @param integer $week
-     * @param object $settings
+     *  Get the data of the week
+     *
+     * @param string  $url      The url to get data from
+     * @param integer $week     The week to get
+     * @param object  $settings The settings to send along
+     *
      * @return mixed
      */
-    protected function getWeekData($url, $week, $settings){
-        $key = 'rooster' . $week;
+    protected function getWeekData($url, $week, $settings)
+    {
+        $key = 'rooster'.$week;
 
-        $cache = $this->cache->has($key, function ($cache) use ($key) {
-            return $cache->get($key);
-        });
+        $cache = $this->cache->has(
+            $key,
+            function ($cache) use ($key) {
+                return $cache->get($key);
+            }
+        );
 
-        if ($cache) {
+        if ($cache === true) {
             return $cache;
         }
 
@@ -78,21 +103,26 @@ class Client
             'GET',
             $url,
             [
-                'headers' => [
-                    'Cookie' => 'laravel_session=' . $settings->loginSession,
-                    'Cookie2' => '$Version=' .$settings->version,
-                    'accessToken' => $settings->accessToken,
-                    'language' => $settings->language,
-                    'clientToken' => $settings->clientToken
-                ]
+             'headers' => [
+                           'Cookie'      => 'laravel_session='.$settings->loginSession,
+                           'Cookie2'     => '$Version='.$settings->version,
+                           'accessToken' => $settings->accessToken,
+                           'language'    => $settings->language,
+                           'clientToken' => $settings->clientToken,
+                          ],
             ]
         )->getBody();
         $this->cache->store($key, $data);
         return $this->cache->get($key);
-    }
+
+    }//end getWeekData()
+
 
     /**
      * Get the start and end date for the specified week.
+     *
+     * @param integer $year The year
+     * @param integer $week The week to get both from
      *
      * @return array
      */
@@ -110,14 +140,19 @@ class Client
         $endDate->add(DateInterval::createFromDateString('this week this sunday'));
 
         $end = $endDate->getTimestamp();
-        return ['start' => $start, 'end' => $end];
-    }
+        return [
+                'start' => $start,
+                'end'   => $end,
+               ];
+
+    }//end getStartAndEndForWeek()
+
 
     /**
      * Get the week by sending a post request.
      *
      * @param integer $week The week number
-     * @param string $year The year of the week.
+     * @param string  $year The year of the week.
      *
      * @return array
      */
@@ -127,6 +162,9 @@ class Client
             $year = date('Y');
         }
 
-        return $this->getData($week,$year);
-    }
-}
+        return $this->getData($week, $year);
+
+    }//end getWeek()
+
+
+}//end class
