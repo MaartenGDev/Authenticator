@@ -24,7 +24,7 @@ class Authenticator implements AuthenticatorInterface
         $this->client = $client;
         $this->cache  = $cache;
 
-    }//end __construct()
+    }
 
 
     /**
@@ -70,7 +70,7 @@ class Authenticator implements AuthenticatorInterface
                          'loginSession' => $loginSession,
                         ];
 
-    }//end getApiCredentials()
+    }
 
 
     /**
@@ -118,7 +118,7 @@ class Authenticator implements AuthenticatorInterface
                          'login_session' => $loginSession,
                         ];
 
-    }//end sendAuthHeader()
+    }
 
 
-}//end class
+}
